@@ -3,10 +3,9 @@ from decimal import Decimal
 
 import pytest
 
+from djmoney.contrib.django_rest_framework import JSONMoneyField
 from djmoney.money import Money
-
 from ..testapp.models import ModelWithVanillaMoneyField, NullMoneyFieldModel, ValidatedMoneyModel
-
 
 pytestmark = pytest.mark.django_db
 serializers = pytest.importorskip("rest_framework.serializers")
@@ -16,7 +15,7 @@ djmoney_fields = pytest.importorskip("djmoney.contrib.django_rest_framework.fiel
 
 class TestMoneyField:
     def get_serializer(
-        self, model_class, field_name=None, instance=None, data=fields.empty, fields_="__all__", field_kwargs=None
+            self, model_class, field_name=None, instance=None, data=fields.empty, fields_="__all__", field_kwargs=None
     ):
         class MetaSerializer(serializers.SerializerMetaclass):
             def __new__(cls, name, bases, attrs):
@@ -36,19 +35,19 @@ class TestMoneyField:
     @pytest.mark.parametrize(
         "model_class, create_kwargs, expected",
         (
-            (NullMoneyFieldModel, {"field": None}, {"field": None, "field_currency": "USD"}),
-            (NullMoneyFieldModel, {"field": Money(10, "USD")}, {"field": "10.00", "field_currency": "USD"}),
-            (
-                ModelWithVanillaMoneyField,
-                {"money": Money(10, "USD")},
-                {
-                    "integer": 0,
-                    "money": "10.00",
-                    "money_currency": "USD",
-                    "second_money": "0.00",
-                    "second_money_currency": "EUR",
-                },
-            ),
+                (NullMoneyFieldModel, {"field": None}, {"field": None, "field_currency": "USD"}),
+                (NullMoneyFieldModel, {"field": Money(10, "USD")}, {"field": "10.00", "field_currency": "USD"}),
+                (
+                        ModelWithVanillaMoneyField,
+                        {"money": Money(10, "USD")},
+                        {
+                            "integer": 0,
+                            "money": "10.00",
+                            "money_currency": "USD",
+                            "second_money": "0.00",
+                            "second_money_currency": "EUR",
+                        },
+                ),
         ),
     )
     def test_to_representation(self, model_class, create_kwargs, expected):
@@ -60,14 +59,14 @@ class TestMoneyField:
     @pytest.mark.parametrize(
         "model_class, field, field_kwargs, value, expected",
         (
-            (NullMoneyFieldModel, "field", None, None, None),
-            (NullMoneyFieldModel, "field", {"default_currency": "EUR", "allow_null": True}, None, None),
-            (NullMoneyFieldModel, "field", None, Money(10, "USD"), Money(10, "USD")),
-            (NullMoneyFieldModel, "field", {"default_currency": "EUR"}, Money(10, "USD"), Money(10, "USD")),
-            (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, 10, Money(10, "EUR")),
-            (ModelWithVanillaMoneyField, "money", None, Money(10, "USD"), Money(10, "USD")),
-            (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, Money(10, "USD"), Money(10, "USD")),
-            (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, 10, Money(10, "EUR")),
+                (NullMoneyFieldModel, "field", None, None, None),
+                (NullMoneyFieldModel, "field", {"default_currency": "EUR", "allow_null": True}, None, None),
+                (NullMoneyFieldModel, "field", None, Money(10, "USD"), Money(10, "USD")),
+                (NullMoneyFieldModel, "field", {"default_currency": "EUR"}, Money(10, "USD"), Money(10, "USD")),
+                (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, 10, Money(10, "EUR")),
+                (ModelWithVanillaMoneyField, "money", None, Money(10, "USD"), Money(10, "USD")),
+                (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, Money(10, "USD"), Money(10, "USD")),
+                (ModelWithVanillaMoneyField, "money", {"default_currency": "EUR"}, 10, Money(10, "EUR")),
         ),
     )
     def test_to_internal_value(self, model_class, field, field_kwargs, value, expected):
@@ -85,16 +84,16 @@ class TestMoneyField:
     @pytest.mark.parametrize(
         "body, field_kwargs, expected",
         (
-            ({"field": "10", "field_currency": "EUR"}, None, Money(10, "EUR")),
-            ({"field": "10"}, {"default_currency": "EUR"}, Money(10, "EUR")),
-            ({"field": "12.20", "field_currency": "GBP"}, None, Money(12.20, "GBP")),
-            ({"field": "15.15", "field_currency": "USD"}, None, Money(15.15, "USD")),
-            ({"field": None, "field_currency": None}, None, None),
-            ({"field": None, "field_currency": None}, {"default_currency": "EUR"}, None),
-            ({"field": "16", "field_currency": None}, None, Decimal("16.00")),
-            ({"field": "16", "field_currency": None}, {"default_currency": "EUR"}, Decimal("16.00")),
-            ({"field": None, "field_currency": "USD"}, None, None),
-            ({"field": None, "field_currency": "USD"}, {"default_currency": "EUR"}, None),
+                ({"field": "10", "field_currency": "EUR"}, None, Money(10, "EUR")),
+                ({"field": "10"}, {"default_currency": "EUR"}, Money(10, "EUR")),
+                ({"field": "12.20", "field_currency": "GBP"}, None, Money(12.20, "GBP")),
+                ({"field": "15.15", "field_currency": "USD"}, None, Money(15.15, "USD")),
+                ({"field": None, "field_currency": None}, None, None),
+                ({"field": None, "field_currency": None}, {"default_currency": "EUR"}, None),
+                ({"field": "16", "field_currency": None}, None, Decimal("16.00")),
+                ({"field": "16", "field_currency": None}, {"default_currency": "EUR"}, Decimal("16.00")),
+                ({"field": None, "field_currency": "USD"}, None, None),
+                ({"field": None, "field_currency": "USD"}, {"default_currency": "EUR"}, None),
         ),
     )
     def test_post_put_values(self, body, field_kwargs, expected):
@@ -112,14 +111,14 @@ class TestMoneyField:
     @pytest.mark.parametrize(
         "value, error",
         (
-            (Money(50, "EUR"), "Ensure this value is greater than or equal to €100.00."),
-            (Money(1500, "EUR"), "Ensure this value is less than or equal to €1,000.00."),
-            (Money(40, "USD"), "Ensure this value is greater than or equal to $50.00."),
-            (Money(600, "USD"), "Ensure this value is less than or equal to $500.00."),
-            (Money(400, "NOK"), "Ensure this value is greater than or equal to NOK500.00."),
-            (Money(950, "NOK"), "Ensure this value is less than or equal to NOK900.00."),
-            (Money(5, "SEK"), "Ensure this value is greater than or equal to 10."),
-            (Money(1600, "SEK"), "Ensure this value is less than or equal to 1500."),
+                (Money(50, "EUR"), "Ensure this value is greater than or equal to €100.00."),
+                (Money(1500, "EUR"), "Ensure this value is less than or equal to €1,000.00."),
+                (Money(40, "USD"), "Ensure this value is greater than or equal to $50.00."),
+                (Money(600, "USD"), "Ensure this value is less than or equal to $500.00."),
+                (Money(400, "NOK"), "Ensure this value is greater than or equal to NOK500.00."),
+                (Money(950, "NOK"), "Ensure this value is less than or equal to NOK900.00."),
+                (Money(5, "SEK"), "Ensure this value is greater than or equal to 10."),
+                (Money(1600, "SEK"), "Ensure this value is less than or equal to 1500."),
         ),
     )
     def test_model_validators(self, value, error):
@@ -132,8 +131,8 @@ class TestMoneyField:
     @pytest.mark.parametrize(
         "value, error",
         (
-            (Money(50, "EUR"), "Ensure this value is greater than or equal to 100."),
-            (Money(1500, "EUR"), "Ensure this value is less than or equal to 1000."),
+                (Money(50, "EUR"), "Ensure this value is greater than or equal to 100."),
+                (Money(1500, "EUR"), "Ensure this value is less than or equal to 1000."),
         ),
     )
     def test_boundary_values(self, value, error):
@@ -203,3 +202,33 @@ class TestMoneyField:
         serializer = Serializer(data=data)
         serializer.is_valid(raise_exception=True)
         assert serializer.validated_data["money"] == expected
+
+
+class TestJSONMoneyField:
+    @pytest.mark.parametrize(
+        "model_class, create_kwargs, expected",
+        (
+                (NullMoneyFieldModel, {"field": None}, {"field": {"amount": None, "currency": "USD"}}),
+                (NullMoneyFieldModel, {"field": Money(10, "USD")}, {"field": {"amount": "10.00", "currency": "USD"}}),
+                (
+                        ModelWithVanillaMoneyField,
+                        {"money": Money(10, "USD")},
+                        {
+                            "integer": 0,
+                            "money": {
+                                "amount": "10.00",
+                                "currency": "USD",
+                            },
+                            "second_money": {
+                                "amount": "0.00",
+                                "currency": "EUR",
+                            },
+                        },
+                ),
+        ),
+    )
+    def test_to_representation(self, model_class, create_kwargs, expected):
+        instance = model_class.objects.create(**create_kwargs)
+        expected["id"] = instance.id
+        serializer = JSONMoneyField(data=instance, max_digits=10, decimal_places=2)
+        assert serializer.data == expected
